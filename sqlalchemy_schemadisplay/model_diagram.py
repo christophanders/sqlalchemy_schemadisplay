@@ -2,7 +2,7 @@
 Set of functions to generate the diagram related to the ORM models
 """
 import types
-from typing import List
+from typing import List, Union
 
 import pydot
 from sqlalchemy.orm import Mapper, Relationship
@@ -16,6 +16,7 @@ def _mk_label(
     show_datatypes: bool,
     show_inherited: bool,
     bordersize: float,
+    max_attributes: Union[int, None],
 ) -> str:
     # pylint: disable=too-many-arguments
     """Generate the rendering of a given orm model.
@@ -43,13 +44,24 @@ def _mk_label(
         return colstr
 
     if show_attributes:
-        if not show_inherited:
-            cols = [c for c in mapper.columns if c.table == mapper.tables[0]]
-        else:
-            cols = mapper.columns
+        cols = []
+        attributes_count = 0
+        last_row_suffix = ""
+        for c in mapper.columns:
+            if c.table == mapper.tables[0] or show_inherited:
+                cols.append(c)
+                attributes_count += 1
+                if max_attributes and attributes_count >= max_attributes:
+                    last_row_suffix = (
+                        f'<TR><TD ALIGN="LEFT">... and {len(mapper.columns) - max_attributes} more'
+                        f'<BR ALIGN="LEFT"/></TD></TR>'
+                    )
+                    break
+
         html += '<TR><TD ALIGN="LEFT">%s</TD></TR>' % '<BR ALIGN="LEFT"/>'.join(
             format_col(col) for col in cols
         )
+        html += last_row_suffix
     else:
         _ = [
             format_col(col)
@@ -105,6 +117,7 @@ def create_uml_graph(
     show_datatypes: bool = True,
     linewidth: float = 1.0,
     font: str = "Bitstream-Vera Sans",
+    max_attributes: Union[int, None] = None,
 ) -> pydot.Dot:
     # pylint: disable=too-many-locals,too-many-arguments
     """Create rendering of the orm models associated with the database
@@ -123,6 +136,8 @@ def create_uml_graph(
         linewidth (float, optional): thickness of the lines in the diagram. Defaults to 1.0.
         font (str, optional): type of fond to be used for the diagram. \
             Defaults to "Bitstream-Vera Sans".
+        max_attributes (int, optional): maximum number of attributes to be displayed in the \
+            diagram per class. If no value is provided, all attributes will be displayed. \
 
     Returns:
         pydot.Dot: pydot object with the diagram for the orm models.
@@ -149,6 +164,7 @@ def create_uml_graph(
                     show_datatypes,
                     show_inherited,
                     linewidth,
+                    max_attributes,
                 ),
                 fontname=font,
                 fontsize="8.0",
