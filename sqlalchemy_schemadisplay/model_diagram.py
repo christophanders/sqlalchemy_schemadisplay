@@ -56,11 +56,11 @@ def _mk_label(
                         f"... and {len(mapper.columns) - max_attributes} more"
                     )
                     break
-
+        formatted_cols = [format_col(col) for col in cols]
+        formatted_cols.append(last_row_suffix)
         html += '<TR><TD ALIGN="LEFT">%s</TD></TR>' % '<BR ALIGN="LEFT"/>'.join(
-            [format_col(col) for col in cols].append(last_row_suffix)
+            formatted_cols
         )
-        html += last_row_suffix
     else:
         _ = [
             format_col(col)
