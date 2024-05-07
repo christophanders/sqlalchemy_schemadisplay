@@ -53,13 +53,12 @@ def _mk_label(
                 attributes_count += 1
                 if max_attributes and attributes_count >= max_attributes:
                     last_row_suffix = (
-                        f'<TR><TD ALIGN="LEFT">... and {len(mapper.columns) - max_attributes} more'
-                        f'<BR ALIGN="LEFT"/></TD></TR>'
+                        f"... and {len(mapper.columns) - max_attributes} more"
                     )
                     break
 
         html += '<TR><TD ALIGN="LEFT">%s</TD></TR>' % '<BR ALIGN="LEFT"/>'.join(
-            format_col(col) for col in cols
+            [format_col(col) for col in cols].append(last_row_suffix)
         )
         html += last_row_suffix
     else:
